@@ -1,0 +1,59 @@
+html {
+  @media (width < 740px) {
+    font-size: 56.25%;
+  }
+  @media (740px <= width) {
+    font-size: 62.5%;
+  }
+}
+
+body {
+  font-family: arial, sans-serif;
+  font-size: 1.6rem;
+}
+
+* {
+  outline: none;
+}
+
+a {
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+canvas,
+img,
+picture,
+svg,
+video {
+  background-repeat: no-repeat;
+  background-size: cover;
+  font-style: italic;
+  height: auto;
+  max-width: 100%;
+  pointer-events: none;
+  shape-margin: 1rem;
+  vertical-align: middle;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+.p-menuitem-link {
+  padding: 1rem 1.25rem;
+}
+
+.p-menuitem-icon {
+  margin-right: 0.5rem;
+}
+
+.p-submenu-icon {
+  margin-left: 0.5rem;
+}
+
+.pi {
+  font-size: 1.2rem;
+}
