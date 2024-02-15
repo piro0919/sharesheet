@@ -70,6 +70,7 @@
     "lint:fix": "next lint --fix",
     "lint:style": "stylelint --fix '**/*.scss'",
     "postbuild": "next-sitemap",
+    "prepare": "husky",
     "prettier": "prettier --write .",
     "start": "next start",
     "type-check": "tsc --noemit"

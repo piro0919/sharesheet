@@ -1,7 +1,8 @@
 .nav {
+  background: #f9fafb;
   display: flex;
+  flex-direction: column;
   left: 0;
-  padding: 12px;
   position: fixed;
   top: 0;
   width: 100%;
@@ -9,5 +10,6 @@
 }
 
 .menubar {
+  border: 0;
   font-size: 80%;
 }
