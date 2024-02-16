@@ -57,3 +57,12 @@ ul {
 .pi {
   font-size: 1.2rem;
 }
+
+.w-color-github {
+  width: 212px !important;
+}
+
+.w-color-github > div:nth-child(1),
+.w-color-github > div:nth-child(2) {
+  display: none;
+}

@@ -1,7 +1,4 @@
-.nav {
-  background: #f9fafb;
-  display: flex;
-  flex-direction: column;
+.topWrapper {
   left: 0;
   position: fixed;
   top: 0;
@@ -9,7 +6,54 @@
   z-index: 181;
 }
 
+.nav {
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+}
+
+.buttonsWrapper {
+  align-items: center;
+  background: #edf2fa;
+  display: flex;
+  gap: 6px;
+  padding: 6px 12px;
+}
+
+.button {
+  aspect-ratio: 1 / 1;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 2px #000;
+  display: flex;
+  padding: 6px;
+}
+
+.separater {
+  background: #ccc;
+  height: 16px;
+  margin: 0 4px;
+  width: 1px;
+}
+
 .menubar {
   border: 0;
   font-size: 80%;
+}
+
+.bold {
+  font-weight: 900;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.strikethrough {
+  text-decoration: line-through;
+}
+
+.color {
+  /* stylelint-disable-next-line color-named */
+  color: red;
 }
