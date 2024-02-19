@@ -42,6 +42,11 @@ ul {
   list-style: none;
 }
 
+/* primereact/menubar start */
+.p-menuitem-content {
+  border-radius: 0;
+}
+
 .p-menuitem-link {
   padding: 1rem 1.25rem;
 }
@@ -57,12 +62,22 @@ ul {
 .pi {
   font-size: 1.2rem;
 }
+/* primereact/menubar end */
 
+/* @uiw/react-color-github start */
 .w-color-github {
-  width: 212px !important;
+  padding: 0 !important;
+  width: 202px !important;
 }
 
 .w-color-github > div:nth-child(1),
 .w-color-github > div:nth-child(2) {
   display: none;
 }
+/* @uiw/react-color-github end */
+
+/* @tippyjs/react start */
+.tippy-arrow {
+  color: #edf2fa;
+}
+/* @tippyjs/react end */
