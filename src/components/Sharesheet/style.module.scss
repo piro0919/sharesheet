@@ -59,6 +59,20 @@
   padding: 4px 2px;
 }
 
+.tippyContentInner {
+  display: grid;
+  gap: 8px;
+}
+
+.resetButton {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 2px #000;
+  display: flex;
+  justify-content: center;
+  padding: 4px;
+}
+
 .colorb80000 {
   color: #b80000;
 }
