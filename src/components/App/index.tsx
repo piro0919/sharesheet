@@ -32,8 +32,6 @@ export default function App(): JSX.Element {
           </button>
         </div>
       </header>
-      <hr className={styles.hr} />
-      <main className={styles.main}>aaa</main>
       <footer className={styles.footer}>&copy; 2024 kk-web</footer>
     </div>
   );

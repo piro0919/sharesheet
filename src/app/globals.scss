@@ -55,8 +55,17 @@ ul {
   margin-right: 0.5rem;
 }
 
+.p-submenu-list {
+  min-width: 12.5rem;
+  width: auto !important;
+}
+
 .p-submenu-icon {
   margin-left: 0.5rem;
+}
+
+.p-menuitem-text {
+  white-space: nowrap;
 }
 
 .pi {

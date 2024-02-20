@@ -8,10 +8,11 @@ import Tippy from "@tippyjs/react";
 import GitHub from "@uiw/react-color-github";
 import { DetailedSettings } from "handsontable/plugins/customBorders";
 import { registerAllModules } from "handsontable/registry";
+import { useParams } from "next/navigation";
 import { PrimeIcons } from "primereact/api";
 import { Menubar } from "primereact/menubar";
 import { MenuItem } from "primereact/menuitem";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BsBorder,
   BsBorderAll,
@@ -33,48 +34,61 @@ import {
 } from "react-icons/fa6";
 import { MdFormatColorReset } from "react-icons/md";
 import useMeasure from "react-use-measure";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import { uid } from "uid";
 import styles from "./style.module.scss";
+
+const MySwal = withReactContent(Swal);
 
 registerAllModules();
 
 export default function Sharesheet(): JSX.Element {
   const data = useMemo(
     () =>
-      Array.from({ length: 1000 }, () => Array.from({ length: 26 }, () => "")),
+      Array.from({ length: 100 }, () => Array.from({ length: 26 }, () => "")),
     [],
   );
   const items: MenuItem[] = useMemo(
     () => [
       {
-        icon: PrimeIcons.FILE,
+        id: uid(),
         items: [
           {
             icon: PrimeIcons.SAVE,
+            id: uid(),
             label: "保存",
           },
           {
+            id: uid(),
             separator: true,
           },
           {
             icon: PrimeIcons.DOWNLOAD,
+            id: uid(),
             label: "ダウンロード",
           },
           {
+            id: uid(),
             separator: true,
           },
           {
             icon: PrimeIcons.PENCIL,
+            id: uid(),
             label: "名前を変更",
           },
         ],
         label: "ファイル",
       },
       {
-        icon: PrimeIcons.QUESTION_CIRCLE,
+        id: uid(),
         items: [
           {
-            icon: PrimeIcons.MONEY_BILL,
-            label: "寄付",
+            icon: PrimeIcons.QUESTION_CIRCLE,
+            id: uid(),
+            label: "シェアシートのヘルプ",
+            target: "_blank",
+            url: "/docs",
           },
         ],
         label: "ヘルプ",
@@ -101,7 +115,7 @@ export default function Sharesheet(): JSX.Element {
     } = rangeRef;
 
     // @ts-ignore
-    hotRef.current.hotInstance.selectCell(row, column, row2, column2);
+    hotRef.current.hotInstance.selectCell(row, column, row2, column2, false);
   }, []);
   const setClassName = useCallback<
     (args: {
@@ -209,6 +223,20 @@ export default function Sharesheet(): JSX.Element {
     ],
     [],
   );
+  const params = useParams();
+
+  useEffect(() => {
+    const callback = async (): Promise<void> => {
+      await MySwal.fire({
+        icon: "question",
+        input: "text",
+        title: "名前を付けてください",
+      });
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    callback();
+  }, []);
 
   return (
     <>
@@ -858,22 +886,29 @@ export default function Sharesheet(): JSX.Element {
       {topHeight > 0 ? (
         <div style={{ paddingTop: topHeight }}>
           <HotTable
-            afterSelection={(row, column, row2, column2) => {
-              rangeRef.current = { column, column2, row, row2 };
+            afterSelectionEnd={(row, column, row2, column2) => {
+              rangeRef.current = {
+                column: column >= 0 ? column : 0,
+                column2,
+                row: row >= 0 ? row : 0,
+                row2,
+              };
             }}
             autoColumnSize={true}
-            autoWrapCol={false}
-            autoWrapRow={false}
+            autoWrapCol={true}
+            autoWrapRow={true}
             colHeaders={true}
             colWidths={100}
             customBorders={customBorders}
             data={data}
             height={`calc(100dvh - ${topHeight}px)`}
+            id={params?.sharesheetId as string}
             licenseKey="non-commercial-and-evaluation"
             manualColumnMove={true}
             manualColumnResize={true}
             manualRowMove={true}
             manualRowResize={true}
+            persistentState={true}
             ref={hotRef}
             rowHeaders={true}
           />

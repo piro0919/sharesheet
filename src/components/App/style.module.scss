@@ -1,22 +1,13 @@
 .wrapper {
   align-items: center;
-  display: flex;
-  flex-direction: column;
-}
-
-@mixin inner {
-  @media (width < 740px) {
-    width: calc(100% - 12px * 2);
-  }
-  @media (740px <= width) {
-    width: min(1280px, calc(100% - 24px * 2));
-  }
+  display: grid;
+  grid-template: 1fr auto / auto;
+  height: 100dvh;
 }
 
 .header {
   align-items: center;
   display: flex;
-  height: 95svh;
   justify-content: center;
 }
 
@@ -52,25 +43,10 @@
   width: 320px;
 }
 
-.hr {
-  @include inner;
-  background: #ddd;
-  border: 0;
-  height: 1px;
-}
-
-.main {
-  @include inner;
-  display: grid;
-  gap: 24px;
-  grid-template: auto / repeat(2, 1fr);
-  padding-bottom: 48px;
-  padding-top: 48px;
-}
-
 .footer {
   background: #f8f9fa;
-  padding: 48px 0;
+  font-size: 1.2rem;
+  padding: 12px 0;
   text-align: center;
   width: 100%;
 }
