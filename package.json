@@ -2,7 +2,7 @@
   "dependencies": {
     "@handsontable/react": "14.1.0",
     "@tippyjs/react": "4.2.6",
-    "@uiw/react-color-github": "2.0.8",
+    "@uiw/react-color-github": "2.1.0",
     "handsontable": "14.1.0",
     "next": "14.1.0",
     "nextra": "2.13.3",
