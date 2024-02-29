@@ -6,6 +6,8 @@ const withNextra = nextra({
 });
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  reactStrictMode: false,
+};
 
 export default withNextra(nextConfig);

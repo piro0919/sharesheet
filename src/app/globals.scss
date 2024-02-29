@@ -90,3 +90,10 @@ ul {
   color: #edf2fa;
 }
 /* @tippyjs/react end */
+
+/* sweetalert2 start */
+/* stylelint-disable-next-line no-descending-specificity */
+div:where(.swal2-container) div:where(.swal2-popup) {
+  font-size: inherit !important;
+}
+/* sweetalert2 end */

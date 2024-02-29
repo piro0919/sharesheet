@@ -3,97 +3,31 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 "use client";
-import { HotTable } from "@handsontable/react";
-import Tippy from "@tippyjs/react";
-import GitHub from "@uiw/react-color-github";
+import { HotTable, HotTableProps } from "@handsontable/react";
 import { DetailedSettings } from "handsontable/plugins/customBorders";
 import { registerAllModules } from "handsontable/registry";
-import { useParams } from "next/navigation";
-import { PrimeIcons } from "primereact/api";
-import { Menubar } from "primereact/menubar";
-import { MenuItem } from "primereact/menuitem";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  BsBorder,
-  BsBorderAll,
-  BsBorderBottom,
-  BsBorderCenter,
-  BsBorderInner,
-  BsBorderLeft,
-  BsBorderMiddle,
-  BsBorderOuter,
-  BsBorderRight,
-  BsBorderTop,
-} from "react-icons/bs";
-import {
-  FaBold,
-  FaItalic,
-  FaPaintRoller,
-  FaPaintbrush,
-  FaStrikethrough,
-} from "react-icons/fa6";
-import { MdFormatColorReset } from "react-icons/md";
 import useMeasure from "react-use-measure";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { uid } from "uid";
+import ControlBar, { ControlBarProps } from "../ControlBar";
+import MenuBar, { MenuBarProps } from "../MenuBar";
 import styles from "./style.module.scss";
 
 const MySwal = withReactContent(Swal);
 
 registerAllModules();
 
-export default function Sharesheet(): JSX.Element {
+export type SharesheetProps = Pick<MenuBarProps, "sharesheetId"> & {
+  sharesheetId: HotTableProps["id"];
+};
+
+export default function Sharesheet({
+  sharesheetId,
+}: SharesheetProps): JSX.Element {
   const data = useMemo(
     () =>
-      Array.from({ length: 100 }, () => Array.from({ length: 26 }, () => "")),
-    [],
-  );
-  const items: MenuItem[] = useMemo(
-    () => [
-      {
-        id: uid(),
-        items: [
-          {
-            icon: PrimeIcons.SAVE,
-            id: uid(),
-            label: "保存",
-          },
-          {
-            id: uid(),
-            separator: true,
-          },
-          {
-            icon: PrimeIcons.DOWNLOAD,
-            id: uid(),
-            label: "ダウンロード",
-          },
-          {
-            id: uid(),
-            separator: true,
-          },
-          {
-            icon: PrimeIcons.PENCIL,
-            id: uid(),
-            label: "名前を変更",
-          },
-        ],
-        label: "ファイル",
-      },
-      {
-        id: uid(),
-        items: [
-          {
-            icon: PrimeIcons.QUESTION_CIRCLE,
-            id: uid(),
-            label: "シェアシートのヘルプ",
-            target: "_blank",
-            url: "/docs",
-          },
-        ],
-        label: "ヘルプ",
-      },
-    ],
+      Array.from({ length: 1000 }, () => Array.from({ length: 26 }, () => "")),
     [],
   );
   const [topRef, { height: topHeight }] = useMeasure();
@@ -105,7 +39,7 @@ export default function Sharesheet(): JSX.Element {
     row: number;
     row2: number;
   }>();
-  const selectCell = useCallback(() => {
+  const handleSelectCell = useCallback<ControlBarProps["onSelectCell"]>(() => {
     if (!hotRef.current || !rangeRef.current) {
       return;
     }
@@ -117,15 +51,68 @@ export default function Sharesheet(): JSX.Element {
     // @ts-ignore
     hotRef.current.hotInstance.selectCell(row, column, row2, column2, false);
   }, []);
-  const setClassName = useCallback<
+  const toggleClassName = useCallback<
     (args: {
-      callback?: (args: { column: number; row: number }) => void;
       className: string;
+      duplicatedClassNames?: string[];
+      isReset?: boolean;
     }) => void
-  >(
-    ({ callback, className: styleClassName }) => {
-      selectCell();
+  >(({ className: styleClassName, duplicatedClassNames }) => {
+    if (!hotRef.current || !rangeRef.current) {
+      return;
+    }
 
+    const {
+      current: { column, column2, row, row2 },
+    } = rangeRef;
+
+    // @ts-ignore
+    hotRef.current.hotInstance.selectCell(row, column, row2, column2, false);
+
+    // @ts-ignore
+    const { className = "" } = hotRef.current.hotInstance.getCellMeta(
+      row,
+      column,
+    );
+    const hasClassName = (className as string)
+      .split(" ")
+      .includes(styleClassName);
+
+    Array.from({ length: row2 - row + 1 }).forEach((_, rowIndex) => {
+      Array.from({ length: column2 - column + 1 }).forEach((_, columnIndex) => {
+        const currentColumn = columnIndex + column;
+        const currentRow = rowIndex + row;
+        // @ts-ignore
+        const { className = "" } = hotRef.current.hotInstance.getCellMeta(
+          currentRow,
+          currentColumn,
+        );
+        const classNames = (className as string)
+          .split(" ")
+          .filter(
+            (className) =>
+              !duplicatedClassNames ||
+              !duplicatedClassNames.includes(className),
+          );
+
+        // @ts-ignore
+        hotRef.current.hotInstance.setCellMeta(
+          currentRow,
+          currentColumn,
+          "className",
+          (hasClassName
+            ? classNames.filter((className) => className !== styleClassName)
+            : [...classNames, styleClassName]
+          ).join(" "),
+        );
+      });
+    });
+
+    // @ts-ignore
+    hotRef.current.hotInstance.render();
+  }, []);
+  const resetClassNames = useCallback<(args: { classNames: string[] }) => void>(
+    ({ classNames }) => {
       if (!hotRef.current || !rangeRef.current) {
         return;
       }
@@ -133,43 +120,30 @@ export default function Sharesheet(): JSX.Element {
       const {
         current: { column, column2, row, row2 },
       } = rangeRef;
+
       // @ts-ignore
-      const { className = "" } = hotRef.current.hotInstance.getCellMeta(
-        row,
-        column,
-      );
-      const hasStyle = className.split(" ").includes(styleClassName);
+      hotRef.current.hotInstance.selectCell(row, column, row2, column2, false);
 
       Array.from({ length: row2 - row + 1 }).forEach((_, rowIndex) => {
         Array.from({ length: column2 - column + 1 }).forEach(
           (_, columnIndex) => {
-            if (!hotRef.current) {
-              return;
-            }
-
-            if (callback) {
-              callback({ column: columnIndex + column, row: rowIndex + row });
-            }
-
-            const { className = "" } =
-              // @ts-ignore
-              hotRef.current.hotInstance.getCellMeta(
-                rowIndex + row,
-                columnIndex + column,
-              );
-            const classNames = className.split(" ");
+            const currentColumn = columnIndex + column;
+            const currentRow = rowIndex + row;
+            // @ts-ignore
+            const { className = "" } = hotRef.current.hotInstance.getCellMeta(
+              currentRow,
+              currentColumn,
+            );
 
             // @ts-ignore
             hotRef.current.hotInstance.setCellMeta(
-              rowIndex + row,
-              columnIndex + column,
+              currentRow,
+              currentColumn,
               "className",
-              (hasStyle
-                ? classNames.filter(
-                    (className: string) => className !== styleClassName,
-                  )
-                : [...classNames, styleClassName]
-              ).join(" "),
+              (className as string)
+                .split(" ")
+                .filter((className) => !classNames.includes(className))
+                .join(" "),
             );
           },
         );
@@ -178,9 +152,42 @@ export default function Sharesheet(): JSX.Element {
       // @ts-ignore
       hotRef.current.hotInstance.render();
     },
-    [selectCell],
+    [],
   );
-  const [customBorders, setCustomBorders] = useState<DetailedSettings[]>([]);
+  const handleToggleBold = useCallback<ControlBarProps["onToggleBold"]>(() => {
+    toggleClassName({ className: styles.bold });
+  }, [toggleClassName]);
+  const handleToggleItalic = useCallback<
+    ControlBarProps["onToggleItalic"]
+  >(() => {
+    toggleClassName({ className: styles.italic });
+  }, [toggleClassName]);
+  const handleToggleStrikethrough = useCallback<
+    ControlBarProps["onToggleStrikethrough"]
+  >(() => {
+    toggleClassName({ className: styles.strikethrough });
+  }, [toggleClassName]);
+  const backgroundColorClassNames = useMemo(
+    () => [
+      styles.backgroundColorb80000,
+      styles.backgroundColordb3e00,
+      styles.backgroundColorfccb00,
+      styles.backgroundColor008b02,
+      styles.backgroundColor006b76,
+      styles.backgroundColor1273de,
+      styles.backgroundColor004dcf,
+      styles.backgroundColor5300eb,
+      styles.backgroundColoreb9694,
+      styles.backgroundColorfad0c3,
+      styles.backgroundColorfef3bd,
+      styles.backgroundColorc1e1c5,
+      styles.backgroundColorbedadc,
+      styles.backgroundColorc4def6,
+      styles.backgroundColorbed3f3,
+      styles.backgroundColord4c4fb,
+    ],
+    [],
+  );
   const colorClassNames = useMemo(
     () => [
       styles.colorb80000,
@@ -202,717 +209,349 @@ export default function Sharesheet(): JSX.Element {
     ],
     [],
   );
-  const backgroundClassNames = useMemo(
-    () => [
-      styles.backgroundb80000,
-      styles.backgrounddb3e00,
-      styles.backgroundfccb00,
-      styles.background008b02,
-      styles.background006b76,
-      styles.background1273de,
-      styles.background004dcf,
-      styles.background5300eb,
-      styles.backgroundeb9694,
-      styles.backgroundfad0c3,
-      styles.backgroundfef3bd,
-      styles.backgroundc1e1c5,
-      styles.backgroundbedadc,
-      styles.backgroundc4def6,
-      styles.backgroundbed3f3,
-      styles.backgroundd4c4fb,
-    ],
+  const handleChangeBackgroundColor = useCallback<
+    NonNullable<ControlBarProps["onChangeBackgroundColor"]>
+  >(
+    ({ hex }) => {
+      toggleClassName({
+        className: styles[`backgroundColor${hex.replace("#", "")}`],
+        duplicatedClassNames: backgroundColorClassNames,
+      });
+    },
+    [backgroundColorClassNames, toggleClassName],
+  );
+  const handleChangeColor = useCallback<
+    NonNullable<ControlBarProps["onChangeColor"]>
+  >(
+    ({ hex }) => {
+      toggleClassName({
+        className: styles[`color${hex.replace("#", "")}`],
+        duplicatedClassNames: colorClassNames,
+      });
+    },
+    [colorClassNames, toggleClassName],
+  );
+  const handleResetBackgroundColor = useCallback<
+    NonNullable<ControlBarProps["onResetBackgroundColor"]>
+  >(() => {
+    resetClassNames({
+      classNames: backgroundColorClassNames,
+    });
+  }, [backgroundColorClassNames, resetClassNames]);
+  const handleResetColor = useCallback<
+    NonNullable<ControlBarProps["onResetColor"]>
+  >(() => {
+    resetClassNames({
+      classNames: colorClassNames,
+    });
+  }, [colorClassNames, resetClassNames]);
+  const afterSelectionEnd = useCallback<
+    NonNullable<HotTableProps["afterSelectionEnd"]>
+  >((row, column, row2, column2) => {
+    rangeRef.current = {
+      column: column >= 0 ? column : 0,
+      column2,
+      row: row >= 0 ? row : 0,
+      row2,
+    };
+  }, []);
+  const [customBorders, setCustomBorders] = useState<DetailedSettings[]>([]);
+  const handleSetBorders = useCallback<ControlBarProps["onSetBorders"]>(
+    // TODO
+    // eslint-disable-next-line unused-imports/no-unused-vars
+    ({ position }) => {
+      if (!hotRef.current || !rangeRef.current) {
+        return;
+      }
+
+      const {
+        current: { column, column2, row, row2 },
+      } = rangeRef;
+
+      // @ts-ignore
+      hotRef.current.hotInstance.selectCell(row, column, row2, column2, false);
+
+      setCustomBorders((prevCustomBorders) => [
+        ...prevCustomBorders,
+        ...Array.from({ length: row2 - row + 1 }).flatMap((_, rowIndex) =>
+          Array.from({ length: column2 - column + 1 }).flatMap(
+            (_, columnIndex) => {
+              const currentColumn = columnIndex + column;
+              const currentRow = rowIndex + row;
+
+              return {
+                bottom: {
+                  width: 1,
+                },
+                col: currentColumn,
+                end: {
+                  width: 1,
+                },
+                row: currentRow,
+                start: {
+                  width: 1,
+                },
+                top: {
+                  width: 1,
+                },
+              };
+            },
+          ),
+        ),
+      ]);
+
+      // Array.from({ length: row2 - row + 1 }).forEach((_, rowIndex) => {
+      //   Array.from({ length: column2 - column + 1 }).forEach(
+      //     (_, columnIndex) => {
+      //       const currentColumn = columnIndex + column;
+      //       const currentRow = rowIndex + row;
+
+      //       setCustomBorders((prevCustomBorders) => {
+      //         switch (position) {
+      //           case "all": {
+      //             return [
+      //               ...prevCustomBorders,
+      //               {
+      //                 bottom: {
+      //                   width: 1,
+      //                 },
+      //                 col: currentColumn,
+      //                 end: {
+      //                   width: 1,
+      //                 },
+      //                 row: currentRow,
+      //                 start: {
+      //                   width: 1,
+      //                 },
+      //                 top: {
+      //                   width: 1,
+      //                 },
+      //               },
+      //             ];
+      //           }
+      //           case "bottom": {
+      //             return [
+      //               ...prevCustomBorders,
+      //               {
+      //                 bottom: {
+      //                   width: 1,
+      //                 },
+      //                 col: currentColumn,
+      //                 row: row2,
+      //               },
+      //             ];
+      //           }
+      //           case "center": {
+      //             return [
+      //               ...prevCustomBorders,
+      //               {
+      //                 bottom:
+      //                   rowIndex === row2 - row
+      //                     ? undefined
+      //                     : {
+      //                         width: 1,
+      //                       },
+      //                 col: currentColumn,
+      //                 row: currentRow,
+      //               },
+      //             ];
+      //           }
+      //           case "inner": {
+      //             return [
+      //               ...prevCustomBorders,
+      //               {
+      //                 bottom:
+      //                   rowIndex === row2 - row
+      //                     ? undefined
+      //                     : {
+      //                         width: 1,
+      //                       },
+      //                 col: currentColumn,
+      //                 end:
+      //                   columnIndex === column2 - column
+      //                     ? undefined
+      //                     : {
+      //                         width: 1,
+      //                       },
+      //                 row: currentRow,
+      //                 start:
+      //                   columnIndex === 0
+      //                     ? undefined
+      //                     : {
+      //                         width: 1,
+      //                       },
+      //                 top:
+      //                   rowIndex === 0
+      //                     ? undefined
+      //                     : {
+      //                         width: 1,
+      //                       },
+      //               },
+      //             ];
+      //           }
+      //           case "left": {
+      //             return [
+      //               ...prevCustomBorders,
+      //               {
+      //                 col: column,
+      //                 row: currentRow,
+      //                 start: {
+      //                   width: 1,
+      //                 },
+      //               },
+      //             ];
+      //           }
+      //           case "middle": {
+      //             return [
+      //               ...prevCustomBorders,
+      //               {
+      //                 col: currentColumn,
+      //                 end:
+      //                   columnIndex === column2 - column
+      //                     ? undefined
+      //                     : {
+      //                         width: 1,
+      //                       },
+      //                 row: currentRow,
+      //               },
+      //             ];
+      //           }
+      //           case "none": {
+      //             return prevCustomBorders.filter(
+      //               (prevCustomBorder) =>
+      //                 ("col" in prevCustomBorder &&
+      //                   prevCustomBorder.col !== currentColumn) ||
+      //                 ("row" in prevCustomBorder &&
+      //                   prevCustomBorder.row !== currentRow),
+      //             );
+      //           }
+      //           case "outer": {
+      //             return [
+      //               ...prevCustomBorders,
+      //               {
+      //                 bottom:
+      //                   rowIndex === row2 - row
+      //                     ? {
+      //                         width: 1,
+      //                       }
+      //                     : undefined,
+      //                 col: currentColumn,
+      //                 end:
+      //                   columnIndex === column2 - column
+      //                     ? {
+      //                         width: 1,
+      //                       }
+      //                     : undefined,
+      //                 row: currentRow,
+      //                 start:
+      //                   columnIndex === 0
+      //                     ? {
+      //                         width: 1,
+      //                       }
+      //                     : undefined,
+      //                 top:
+      //                   rowIndex === 0
+      //                     ? {
+      //                         width: 1,
+      //                       }
+      //                     : undefined,
+      //               },
+      //             ];
+      //           }
+      //           case "right": {
+      //             return [
+      //               ...prevCustomBorders,
+      //               {
+      //                 col: column2,
+      //                 end: {
+      //                   width: 1,
+      //                 },
+      //                 row: currentRow,
+      //               },
+      //             ];
+      //           }
+      //           case "top": {
+      //             return [
+      //               ...prevCustomBorders,
+      //               {
+      //                 col: currentColumn,
+      //                 row: row,
+      //                 top: {
+      //                   width: 1,
+      //                 },
+      //               },
+      //             ];
+      //           }
+      //           default: {
+      //             return prevCustomBorders;
+      //           }
+      //         }
+      //       });
+      //     },
+      //   );
+      // });
+    },
     [],
   );
-  const params = useParams();
 
   useEffect(() => {
     const callback = async (): Promise<void> => {
-      await MySwal.fire({
+      const { value } = await MySwal.fire({
+        allowEscapeKey: false,
+        allowOutsideClick: false,
         icon: "question",
         input: "text",
+        inputValidator: (value) =>
+          value ? undefined : "名前を入力してください。",
         title: "名前を付けてください",
       });
+
+      if (typeof value !== "string") {
+        return;
+      }
+
+      window.localStorage.setItem(`${sharesheetId}-title`, value);
     };
+    const title = window.localStorage.getItem(`${sharesheetId}-title`);
+
+    if (title) {
+      return;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     callback();
-  }, []);
+  }, [sharesheetId]);
 
   return (
     <>
       <div className={styles.topWrapper} ref={topRef}>
-        <nav className={styles.nav}>
-          <Menubar className={styles.menubar} model={items} />
-        </nav>
-        <div className={styles.buttonsWrapper}>
-          <button
-            className={styles.button}
-            onClick={() => {
-              setClassName({ className: styles.bold });
-            }}
-          >
-            <FaBold size={12} />
-          </button>
-          <button
-            className={styles.button}
-            onClick={() => {
-              setClassName({ className: styles.italic });
-            }}
-          >
-            <FaItalic size={12} />
-          </button>
-          <button
-            className={styles.button}
-            onClick={() => {
-              setClassName({ className: styles.strikethrough });
-            }}
-          >
-            <FaStrikethrough size={12} />
-          </button>
-          <Tippy
-            className={styles.tippy}
-            content={
-              <div className={styles.tippyContentInner}>
-                <GitHub
-                  onChange={({ hex }) => {
-                    setClassName({
-                      callback: ({ column, row }) => {
-                        if (!hotRef.current) {
-                          return;
-                        }
-
-                        const { className = "" } =
-                          // @ts-ignore
-                          hotRef.current.hotInstance.getCellMeta(row, column);
-                        const classNames = className.split(" ");
-
-                        // @ts-ignore
-                        hotRef.current.hotInstance.setCellMeta(
-                          row,
-                          column,
-                          "className",
-                          classNames
-                            .filter(
-                              (className: string) =>
-                                !colorClassNames.includes(className),
-                            )
-                            .join(" "),
-                        );
-                      },
-                      className: styles[`color${hex.replace("#", "")}`],
-                    });
-                  }}
-                />
-                <button
-                  className={styles.resetButton}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!hotRef.current || !rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        Array.from({
-                          length: column2 - column + 1,
-                        }).forEach((_, columnIndex) => {
-                          if (!hotRef.current) {
-                            return;
-                          }
-
-                          const { className = "" } =
-                            // @ts-ignore
-                            hotRef.current.hotInstance.getCellMeta(
-                              rowIndex + row,
-                              columnIndex + column,
-                            );
-                          const classNames = className.split(" ");
-
-                          // @ts-ignore
-                          hotRef.current.hotInstance.setCellMeta(
-                            rowIndex + row,
-                            columnIndex + column,
-                            "className",
-                            classNames
-                              .filter(
-                                (className: string) =>
-                                  !colorClassNames.includes(className),
-                              )
-                              .join(" "),
-                          );
-                        });
-                      },
-                    );
-
-                    // @ts-ignore
-                    hotRef.current.hotInstance.render();
-                  }}
-                >
-                  <MdFormatColorReset size={18} />
-                  リセット
-                </button>
-              </div>
-            }
-            interactive={true}
-            trigger="click"
-          >
-            <button
-              className={styles.button}
-              onClick={() => {
-                selectCell();
-              }}
-            >
-              <FaPaintbrush size={12} />
-            </button>
-          </Tippy>
-          <div className={styles.separater} />
-          <Tippy
-            className={styles.tippy}
-            content={
-              <div className={styles.tippyContentInner}>
-                <GitHub
-                  onChange={({ hex }) => {
-                    setClassName({
-                      callback: ({ column, row }) => {
-                        if (!hotRef.current) {
-                          return;
-                        }
-
-                        const { className = "" } =
-                          // @ts-ignore
-                          hotRef.current.hotInstance.getCellMeta(row, column);
-                        const classNames = className.split(" ");
-
-                        // @ts-ignore
-                        hotRef.current.hotInstance.setCellMeta(
-                          row,
-                          column,
-                          "className",
-                          classNames
-                            .filter(
-                              (className: string) =>
-                                !backgroundClassNames.includes(className),
-                            )
-                            .join(" "),
-                        );
-                      },
-                      className: styles[`background${hex.replace("#", "")}`],
-                    });
-                  }}
-                />
-                <button
-                  className={styles.resetButton}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!hotRef.current || !rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        Array.from({
-                          length: column2 - column + 1,
-                        }).forEach((_, columnIndex) => {
-                          if (!hotRef.current) {
-                            return;
-                          }
-
-                          const { className = "" } =
-                            // @ts-ignore
-                            hotRef.current.hotInstance.getCellMeta(
-                              rowIndex + row,
-                              columnIndex + column,
-                            );
-                          const classNames = className.split(" ");
-
-                          // @ts-ignore
-                          hotRef.current.hotInstance.setCellMeta(
-                            rowIndex + row,
-                            columnIndex + column,
-                            "className",
-                            classNames
-                              .filter(
-                                (className: string) =>
-                                  !backgroundClassNames.includes(className),
-                              )
-                              .join(" "),
-                          );
-                        });
-                      },
-                    );
-
-                    // @ts-ignore
-                    hotRef.current.hotInstance.render();
-                  }}
-                >
-                  <MdFormatColorReset size={18} />
-                  リセット
-                </button>
-              </div>
-            }
-            interactive={true}
-            trigger="click"
-          >
-            <button
-              className={styles.button}
-              onClick={() => {
-                selectCell();
-              }}
-            >
-              <FaPaintRoller size={12} />
-            </button>
-          </Tippy>
-          <Tippy
-            className={styles.tippy}
-            content={
-              <div className={styles.borderButtonsWrapper}>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        Array.from({ length: column2 - column + 1 }).forEach(
-                          (_, columnIndex) => {
-                            setCustomBorders((prevCustomBorders) => [
-                              ...prevCustomBorders,
-                              {
-                                bottom: {
-                                  width: 1,
-                                },
-                                col: columnIndex + column,
-                                end: {
-                                  width: 1,
-                                },
-                                row: rowIndex + row,
-                                start: {
-                                  width: 1,
-                                },
-                                top: {
-                                  width: 1,
-                                },
-                              },
-                            ]);
-                          },
-                        );
-                      },
-                    );
-                  }}
-                >
-                  <BsBorderAll size={12} />
-                </button>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        Array.from({ length: column2 - column + 1 }).forEach(
-                          (_, columnIndex) => {
-                            setCustomBorders((prevCustomBorders) => [
-                              ...prevCustomBorders,
-                              {
-                                bottom:
-                                  rowIndex === row2 - row
-                                    ? undefined
-                                    : {
-                                        width: 1,
-                                      },
-                                col: columnIndex + column,
-                                end:
-                                  columnIndex === column2 - column
-                                    ? undefined
-                                    : {
-                                        width: 1,
-                                      },
-                                row: rowIndex + row,
-                                start:
-                                  columnIndex === 0
-                                    ? undefined
-                                    : {
-                                        width: 1,
-                                      },
-                                top:
-                                  rowIndex === 0
-                                    ? undefined
-                                    : {
-                                        width: 1,
-                                      },
-                              },
-                            ]);
-                          },
-                        );
-                      },
-                    );
-                  }}
-                >
-                  <BsBorderInner size={12} />
-                </button>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        Array.from({ length: column2 - column + 1 }).forEach(
-                          (_, columnIndex) => {
-                            setCustomBorders((prevCustomBorders) => [
-                              ...prevCustomBorders,
-                              {
-                                bottom:
-                                  rowIndex === row2 - row
-                                    ? undefined
-                                    : {
-                                        width: 1,
-                                      },
-                                col: columnIndex + column,
-                                row: rowIndex + row,
-                              },
-                            ]);
-                          },
-                        );
-                      },
-                    );
-                  }}
-                >
-                  <BsBorderCenter size={12} />
-                </button>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        Array.from({ length: column2 - column + 1 }).forEach(
-                          (_, columnIndex) => {
-                            setCustomBorders((prevCustomBorders) => [
-                              ...prevCustomBorders,
-                              {
-                                col: columnIndex + column,
-                                end:
-                                  columnIndex === column2 - column
-                                    ? undefined
-                                    : {
-                                        width: 1,
-                                      },
-                                row: rowIndex + row,
-                              },
-                            ]);
-                          },
-                        );
-                      },
-                    );
-                  }}
-                >
-                  <BsBorderMiddle size={12} />
-                </button>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        Array.from({ length: column2 - column + 1 }).forEach(
-                          (_, columnIndex) => {
-                            setCustomBorders((prevCustomBorders) => [
-                              ...prevCustomBorders,
-                              {
-                                bottom:
-                                  rowIndex === row2 - row
-                                    ? {
-                                        width: 1,
-                                      }
-                                    : undefined,
-                                col: columnIndex + column,
-                                end:
-                                  columnIndex === column2 - column
-                                    ? {
-                                        width: 1,
-                                      }
-                                    : undefined,
-                                row: rowIndex + row,
-                                start:
-                                  columnIndex === 0
-                                    ? {
-                                        width: 1,
-                                      }
-                                    : undefined,
-                                top:
-                                  rowIndex === 0
-                                    ? {
-                                        width: 1,
-                                      }
-                                    : undefined,
-                              },
-                            ]);
-                          },
-                        );
-                      },
-                    );
-                  }}
-                >
-                  <BsBorderOuter size={12} />
-                </button>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        setCustomBorders((prevCustomBorders) => [
-                          ...prevCustomBorders,
-                          {
-                            col: column,
-                            row: rowIndex + row,
-                            start: {
-                              width: 1,
-                            },
-                          },
-                        ]);
-                      },
-                    );
-                  }}
-                >
-                  <BsBorderLeft size={12} />
-                </button>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row },
-                    } = rangeRef;
-
-                    Array.from({ length: column2 - column + 1 }).forEach(
-                      (_, columnIndex) => {
-                        setCustomBorders((prevCustomBorders) => [
-                          ...prevCustomBorders,
-                          {
-                            col: columnIndex + column,
-                            row: row,
-                            top: {
-                              width: 1,
-                            },
-                          },
-                        ]);
-                      },
-                    );
-                  }}
-                >
-                  <BsBorderTop size={12} />
-                </button>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column2, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        setCustomBorders((prevCustomBorders) => [
-                          ...prevCustomBorders,
-                          {
-                            col: column2,
-                            end: {
-                              width: 1,
-                            },
-                            row: rowIndex + row,
-                          },
-                        ]);
-                      },
-                    );
-                  }}
-                >
-                  <BsBorderRight size={12} />
-                </button>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: column2 - column + 1 }).forEach(
-                      (_, columnIndex) => {
-                        setCustomBorders((prevCustomBorders) => [
-                          ...prevCustomBorders,
-                          {
-                            bottom: {
-                              width: 1,
-                            },
-                            col: columnIndex + column,
-                            row: row2,
-                          },
-                        ]);
-                      },
-                    );
-                  }}
-                >
-                  <BsBorderBottom size={12} />
-                </button>
-                <button
-                  className={styles.button}
-                  onClick={() => {
-                    selectCell();
-
-                    if (!rangeRef.current) {
-                      return;
-                    }
-
-                    const {
-                      current: { column, column2, row, row2 },
-                    } = rangeRef;
-
-                    Array.from({ length: row2 - row + 1 }).forEach(
-                      (_, rowIndex) => {
-                        Array.from({ length: column2 - column + 1 }).forEach(
-                          (_, columnIndex) => {
-                            setCustomBorders((prevCustomBorders) =>
-                              prevCustomBorders.filter(
-                                (prevCustomBorder) =>
-                                  ("col" in prevCustomBorder &&
-                                    prevCustomBorder.col !==
-                                      columnIndex + column) ||
-                                  ("row" in prevCustomBorder &&
-                                    prevCustomBorder.row !== rowIndex + row),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  }}
-                >
-                  <BsBorder size={12} />
-                </button>
-              </div>
-            }
-            interactive={true}
-            trigger="click"
-          >
-            <button
-              className={styles.button}
-              onClick={() => {
-                selectCell();
-              }}
-            >
-              <BsBorderAll size={12} />
-            </button>
-          </Tippy>
-        </div>
+        <MenuBar sharesheetId={sharesheetId} />
+        <ControlBar
+          onChangeBackgroundColor={handleChangeBackgroundColor}
+          onChangeColor={handleChangeColor}
+          onResetBackgroundColor={handleResetBackgroundColor}
+          onResetColor={handleResetColor}
+          onSelectCell={handleSelectCell}
+          onSetBorders={handleSetBorders}
+          onToggleBold={handleToggleBold}
+          onToggleItalic={handleToggleItalic}
+          onToggleStrikethrough={handleToggleStrikethrough}
+        />
       </div>
       {topHeight > 0 ? (
-        <div style={{ paddingTop: topHeight }}>
-          <HotTable
-            afterSelectionEnd={(row, column, row2, column2) => {
-              rangeRef.current = {
-                column: column >= 0 ? column : 0,
-                column2,
-                row: row >= 0 ? row : 0,
-                row2,
-              };
-            }}
-            autoColumnSize={true}
-            autoWrapCol={true}
-            autoWrapRow={true}
-            colHeaders={true}
-            colWidths={100}
-            customBorders={customBorders}
-            data={data}
-            height={`calc(100dvh - ${topHeight}px)`}
-            id={params?.sharesheetId as string}
-            licenseKey="non-commercial-and-evaluation"
-            manualColumnMove={true}
-            manualColumnResize={true}
-            manualRowMove={true}
-            manualRowResize={true}
-            persistentState={true}
-            ref={hotRef}
-            rowHeaders={true}
-          />
-        </div>
+        <HotTable
+          afterSelectionEnd={afterSelectionEnd}
+          colHeaders={true}
+          colWidths={100}
+          customBorders={customBorders}
+          data={data}
+          height={`calc(100dvh - ${topHeight}px)`}
+          id={sharesheetId}
+          licenseKey="non-commercial-and-evaluation"
+          ref={hotRef}
+          rowHeaders={true}
+          style={{ marginTop: topHeight }}
+        />
       ) : null}
     </>
   );
