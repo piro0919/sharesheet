@@ -1,17 +1,17 @@
 {
   "dependencies": {
     "@handsontable/react": "14.1.0",
-    "@prisma/client": "5.10.1",
+    "@prisma/client": "5.10.2",
     "@tippyjs/react": "4.2.6",
     "@uiw/react-color-github": "2.1.0",
     "handsontable": "14.1.0",
-    "next": "14.1.0",
-    "nextra": "2.13.3",
-    "nextra-theme-docs": "2.13.3",
+    "next": "14.1.1",
+    "nextra": "2.13.4",
+    "nextra-theme-docs": "2.13.4",
     "primeflex": "3.3.1",
     "primeicons": "6.0.1",
     "primereact": "10.5.1",
-    "prisma": "5.10.1",
+    "prisma": "5.10.2",
     "react": "^18",
     "react-beforeunload": "2.6.0",
     "react-dom": "^18",
@@ -21,7 +21,7 @@
     "sweetalert2": "11.10.5",
     "sweetalert2-react-content": "5.0.7",
     "uid": "2.0.2",
-    "usehooks-ts": "2.15.0"
+    "usehooks-ts": "2.15.1"
   },
   "devDependencies": {
     "@commitlint/cli": "18.6.1",
