@@ -21,7 +21,7 @@
     "sweetalert2": "11.10.6",
     "sweetalert2-react-content": "5.0.7",
     "uid": "2.0.2",
-    "usehooks-ts": "2.16.0"
+    "usehooks-ts": "3.0.1"
   },
   "devDependencies": {
     "@commitlint/cli": "19.0.3",
