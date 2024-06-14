@@ -1,11 +1,11 @@
 {
   "dependencies": {
-    "@handsontable/react": "14.3.0",
+    "@handsontable/react": "14.4.0",
     "@prisma/client": "5.15.0",
     "@tippyjs/react": "4.2.6",
     "@uiw/react-color-github": "2.3.0",
-    "handsontable": "14.3.0",
-    "next": "14.2.3",
+    "handsontable": "14.4.0",
+    "next": "14.2.4",
     "nextra": "2.13.4",
     "nextra-theme-docs": "2.13.4",
     "primeflex": "3.3.1",
