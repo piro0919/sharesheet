@@ -27,7 +27,7 @@
     "@commitlint/cli": "19.5.0",
     "@commitlint/config-conventional": "19.5.0",
     "@total-typescript/ts-reset": "0.6.1",
-    "@types/node": "^20",
+    "@types/node": "^22.0.0",
     "@types/react": "^18",
     "@types/react-beforeunload": "2.1.5",
     "@types/react-dom": "^18",
