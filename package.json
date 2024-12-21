@@ -4,7 +4,7 @@
     "@prisma/client": "6.1.0",
     "@tippyjs/react": "4.2.6",
     "@uiw/react-color-github": "2.3.4",
-    "handsontable": "14.6.1",
+    "handsontable": "15.0.0",
     "next": "15.1.2",
     "nextra": "3.3.0",
     "nextra-theme-docs": "3.3.0",
