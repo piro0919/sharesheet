@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@handsontable/react": "15.3.0",
+    "@handsontable/react": "16.0.1",
     "@prisma/client": "6.11.1",
     "@tippyjs/react": "4.2.6",
     "@uiw/react-color-github": "2.7.1",
